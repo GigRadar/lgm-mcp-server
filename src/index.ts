@@ -1,5 +1,18 @@
 #!/usr/bin/env node
 
+// Polyfill fetch for Node < 18
+if (typeof globalThis.fetch === "undefined") {
+  const mod = await import("node-fetch");
+  // @ts-expect-error polyfill
+  globalThis.fetch = mod.default;
+  // @ts-expect-error polyfill
+  globalThis.Response = mod.Response;
+  // @ts-expect-error polyfill
+  globalThis.Request = mod.Request;
+  // @ts-expect-error polyfill
+  globalThis.Headers = mod.Headers;
+}
+
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import { z } from "zod";
