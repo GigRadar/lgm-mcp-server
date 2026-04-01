@@ -98,9 +98,9 @@ All requests are authenticated via `apikey` query parameter. Rate limit: 50 call
 
 Full API docs: [Postman Documentation](https://documenter.getpostman.com/view/2071164/TVCmSkH2)
 
-## Known Issues
+## Known Limitations
 
-- `POST /inbox/email` returns `400 {"error":"email or replyMessageId parameter needed"}` even with valid parameters per the docs. This appears to be an LGM API bug — reported to their support. LinkedIn messaging works fine.
+- `POST /inbox/email` can only **reply to existing email threads** — it cannot initiate new email conversations. You must provide a `replyToMessageId` (from `get_conversation_messages`) or set `replyInLastThread: true`. Use either `leadId` or `leadEmail`, not both.
 
 ## License
 

@@ -380,7 +380,7 @@ server.tool(
 
 server.tool(
   "send_email_message",
-  "Send an email to a lead. The identity must have an email provider (Gmail/Outlook) connected in LGM settings. Requires either leadId or leadEmail, and either replyInLastThread, replyToMessageId, or subject for threading.",
+  "Reply to an existing email thread with a lead. Cannot initiate new email conversations — use replyToMessageId (get it from get_conversation_messages) or replyInLastThread. Requires either leadId or leadEmail (not both).",
   {
     message: z.object({
       html: z.string().describe("HTML version of the email body"),
