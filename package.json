@@ -1,0 +1,33 @@
+{
+  "name": "lgm-mcp-server",
+  "version": "1.0.0",
+  "description": "MCP server for La Growth Machine API",
+  "type": "module",
+  "main": "dist/index.js",
+  "bin": {
+    "lgm-mcp-server": "dist/index.js"
+  },
+  "scripts": {
+    "build": "tsc",
+    "start": "node dist/index.js",
+    "test": "vitest run src/unit.test.ts",
+    "test:e2e": "vitest run src/e2e.test.ts",
+    "test:all": "vitest run"
+  },
+  "keywords": [
+    "mcp",
+    "lagrowthmachine",
+    "lgm"
+  ],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.29.0",
+    "zod": "^4.3.6"
+  },
+  "devDependencies": {
+    "@types/node": "^25.5.0",
+    "typescript": "^6.0.2",
+    "vitest": "^4.1.2"
+  }
+}
