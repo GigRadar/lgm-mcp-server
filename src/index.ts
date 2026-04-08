@@ -298,17 +298,75 @@ server.tool(
 
 server.tool(
   "get_campaign_leads_stats",
-  "Get per-lead statistics for a campaign. Returns 25 leads per page. Use getLeadsAfter/getLeadsBefore for cursor-based pagination.",
+  "Get per-lead statistics for a campaign. Supports cursor-based pagination (getLeadsAfter/getLeadsBefore) for simple page-by-page access, OR offset-based pagination (skip/limit) and status filtering — when skip>0 or status is provided, all pages are fetched client-side and then filtered/sliced.",
   {
     campaignId: z.string().describe("The campaign ID"),
-    getLeadsAfter: z.string().optional().describe("Lead ID to get results after (forward pagination)"),
-    getLeadsBefore: z.string().optional().describe("Lead ID to get results before (backward pagination)"),
+    getLeadsAfter: z.string().optional().describe("Lead ID to get results after (cursor-based forward pagination, single page)"),
+    getLeadsBefore: z.string().optional().describe("Lead ID to get results before (cursor-based backward pagination, single page)"),
+    status: z.string().optional().describe("Filter leads by status, e.g. 'replied', 'converted', 'notinterested'. Triggers full fetch of all pages."),
+    skip: z.number().optional().default(0).describe("Number of leads to skip for offset-based pagination. Triggers full fetch of all pages."),
+    limit: z.number().optional().default(25).describe("Max leads to return (default 25)"),
   },
-  async ({ campaignId, getLeadsAfter, getLeadsBefore }) => {
-    const query: Record<string, string> = {};
-    if (getLeadsAfter) query.getLeadsAfter = getLeadsAfter;
-    if (getLeadsBefore) query.getLeadsBefore = getLeadsBefore;
-    return jsonResult(await lgmFetch(`/campaigns/${campaignId}/statsleads`, "GET", undefined, query));
+  async ({ campaignId, getLeadsAfter, getLeadsBefore, status, skip, limit }) => {
+    const needsClientSide = !!status || (!!skip && skip > 0);
+
+    if (!needsClientSide) {
+      // Direct single-page cursor call — original behaviour
+      const query: Record<string, string> = {};
+      if (getLeadsAfter) query.getLeadsAfter = getLeadsAfter;
+      if (getLeadsBefore) query.getLeadsBefore = getLeadsBefore;
+      return jsonResult(await lgmFetch(`/campaigns/${campaignId}/statsleads`, "GET", undefined, query));
+    }
+
+    // Fetch all pages using cursor pagination, then filter/slice client-side
+    const allLeads: unknown[] = [];
+    let cursor: string | undefined = undefined;
+    const MAX_PAGES = 40; // safety cap: 40 × 25 = 1 000 leads
+
+    for (let page = 0; page < MAX_PAGES; page++) {
+      const query: Record<string, string> = {};
+      if (cursor) query.getLeadsAfter = cursor;
+
+      const response = await lgmFetch(`/campaigns/${campaignId}/statsleads`, "GET", undefined, query) as Record<string, unknown>;
+
+      // Handle common LGM response shapes
+      const leads = (
+        Array.isArray(response.leads) ? response.leads :
+        Array.isArray(response.data) ? response.data :
+        Array.isArray(response.statsLeads) ? response.statsLeads :
+        []
+      ) as Record<string, unknown>[];
+
+      allLeads.push(...leads);
+
+      if (leads.length < 25) break; // reached last page
+
+      const lastLead = leads[leads.length - 1] as Record<string, unknown> | undefined;
+      cursor = lastLead ? String(lastLead.id ?? lastLead._id ?? "") : "";
+      if (!cursor) break;
+    }
+
+    // Apply status filter (case-insensitive)
+    const filtered = status
+      ? allLeads.filter((l) => {
+          const lead = l as Record<string, unknown>;
+          const s = ((lead.status ?? lead.leadStatus ?? "") as string).toLowerCase();
+          return s === status.toLowerCase();
+        })
+      : allLeads;
+
+    // Apply offset pagination
+    const actualSkip = skip ?? 0;
+    const actualLimit = limit ?? 25;
+    const paginated = filtered.slice(actualSkip, actualSkip + actualLimit);
+
+    return jsonResult({
+      leads: paginated,
+      total: filtered.length,
+      skip: actualSkip,
+      limit: actualLimit,
+      hasMore: actualSkip + actualLimit < filtered.length,
+    });
   }
 );
 
