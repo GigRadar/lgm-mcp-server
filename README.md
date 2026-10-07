@@ -1,6 +1,6 @@
 # La Growth Machine MCP Server
 
-A [Model Context Protocol (MCP)](https://modelcontextprotocol.io) server that wraps the full [La Growth Machine API](https://documenter.getpostman.com/view/2071164/TVCmSkH2), giving Claude (and any MCP-compatible client) direct access to your LGM workspace.
+A [Model Context Protocol (MCP)](https://modelcontextprotocol.io) server that wraps the full [La Growth Machine API](https://lagrowthmachine.com/api), giving Claude (and any MCP-compatible client) direct access to your LGM workspace.
 
 ## Features
 
@@ -96,7 +96,7 @@ Base URL: `https://apiv2.lagrowthmachine.com/flow`
 
 All requests are authenticated via `apikey` query parameter. Rate limit: 50 calls per 10 seconds.
 
-Full API docs: [Postman Documentation](https://documenter.getpostman.com/view/2071164/TVCmSkH2)
+Full API docs: [Postman Documentation](https://lagrowthmachine.com/api)
 
 ## Known Limitations
 
